@@ -1,6 +1,9 @@
 import random
 import pygame
+import encode
+import ASCII
 import sys
+import json
 
 pygame.init()
 
@@ -21,13 +24,11 @@ class My:
 
 class Game:
     def __init__(self):
-        self.full_scr = False
-
-        self.got = 0
-        font_2 = pygame.font.Font('./font/MiSans-Light.ttf', 20)
-        font_2.set_bold(True)
-        self.font_surface_2 = font_2.render('功德+1', True, 'white')
-        self.screen = pygame.display.set_mode((800, 480), pygame.RESIZABLE)
+        self.full_scr = None
+        self.x, self.y = pygame.mouse.get_pos()
+        self.font_surface_2 = None
+        self.mods = pygame.RESIZABLE
+        self.screen = pygame.display.set_mode((800, 480), self.mods)
         self.ico = pygame.image.load("./ico/rope_crop.ico")
         pygame.display.set_icon(self.ico)
         pygame.display.set_caption('by Cloud sky', 'by Cloud sky')
@@ -40,9 +41,11 @@ class Game:
         # f = open("secret key/data.txt", "w")
         # f.write('0')
         # f.close()
-        f = open("secret key/data.txt", "r")
-        self.txt = int(f.readline(), 2)
-        f.close()
+        self.f = open("secret key/data.txt", "r")
+        self.a = json.loads(self.f.readline())
+        self.b = encode.decrypt(ASCII.decrypt(self.a))
+        self.txt = int(self.b)
+        self.f.close()
         self.num = self.txt
         # self.num = 114512
 
@@ -50,8 +53,6 @@ class Game:
         pygame.display.flip()
 
     def key(self, event):
-        # if event.type == pygame.KEYDOWN or event.type == pygame.KEYUP:
-        #     print(event.unicode)
         if (event.type == pygame.KEYDOWN and event.key == pygame.K_SPACE) or \
                 (event.type == pygame.MOUSEBUTTONDOWN and event.button == 1):
             if pygame.display.get_active():
@@ -66,7 +67,7 @@ class Game:
                     pygame.mixer.music.queue('./music/功德宝到账.mp3')
                     pygame.mixer.music.set_volume(0.5)
                     pygame.mixer.music.play()
-                self.got = 1
+                self.x, self.y = pygame.mouse.get_pos()
                 self.num += 1
 
         if event.type == pygame.KEYDOWN and event.key == pygame.K_F11 and \
@@ -81,6 +82,8 @@ class Game:
         font = pygame.font.Font('./font/MiSans-Light.ttf', 40)
         font_surface = font.render('功德包余额：%d' % self.num, True, 'white')
         self.screen.blit(font_surface, (10, 1))
+        font_2 = pygame.font.Font('./font/MiSans-Light.ttf', 20)
+        self.font_surface_2 = font_2.render('功德+1', True, 'white')
 
     def display(self):
         my = My(self.screen)
@@ -92,11 +95,13 @@ class Game:
                 # print(event)
                 if event.type == pygame.QUIT:
                     f = open("secret key/data.txt", "r")
-                    txt = int(f.readline(), 2)
+                    a = json.loads(f.readline())
+                    txt = int(encode.decrypt(ASCII.decrypt(a)))
                     f.close()
                     if txt < self.num:
                         f = open("secret key/data.txt", "w")
-                        f.write(str(bin(self.num)))
+                        a = ASCII.encrypt(encode.encrypt(self.num))
+                        f.write(str(a))
                         f.close()
                     pygame.quit()
                     sys.exit()
@@ -104,9 +109,7 @@ class Game:
                 self.key(event)
             my.display()
             self.font()
-            if 0 < self.got <= 300:
-                self.got += 1
-                self.screen.blit(self.font_surface_2, (pygame.mouse.get_pos()[0] - 20, pygame.mouse.get_pos()[1] - 25))
+            self.screen.blit(self.font_surface_2, (self.x - 20, self.y - 25))
 
             pygame.display.update()
 
